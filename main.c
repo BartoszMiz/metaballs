@@ -8,7 +8,7 @@
 #define WINDOW_HEIGHT 600
 #define WINDOW_TITLE "Metaballs"
 
-#define BALL_COUNT 5
+#define BALL_COUNT 20
 
 typedef struct {
 	int x, y, r;
@@ -23,21 +23,21 @@ int rand_range(int min, int max)
 int main(void)
 {
 	InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
+	SetTargetFPS(60);
 
 	srand(69);
 	Ball balls[BALL_COUNT] = {0};
+	Vector3 shaderBalls[BALL_COUNT] = {0};
 
 	for (size_t i = 0; i < BALL_COUNT; i++)
 	{
-		balls[i] = (Ball){
+		balls[i] = (Ball) {
 			.x = rand_range(0, WINDOW_WIDTH),
 			.y = rand_range(0, WINDOW_HEIGHT),
-			.r = rand_range(50, 100),
-			.velX = rand_range(1, 10),
-			.velY = rand_range(1, 10),
+			.r = rand_range(25, 50),
+			.velX = rand_range(1, 3),
+			.velY = rand_range(1, 3),
 		};
-
-		printf("(x: %.2d, y: %.2d, r: %.2d)\n", balls[i].x, balls[i].y, balls[i].r);
 	}
 
 	Image i = {
@@ -48,6 +48,14 @@ int main(void)
 		.data = malloc(sizeof(int) * WINDOW_WIDTH * WINDOW_HEIGHT)
 	};
 
+	memset(i.data, 0x0, sizeof(int) * WINDOW_WIDTH * WINDOW_HEIGHT);
+	Texture2D shaderOutputTexture = LoadTextureFromImage(i);
+	Shader shader = LoadShader(NULL, "shaders/metaball.frag");
+	int windowSizeLoc = GetShaderLocation(shader, "windowSize");
+	SetShaderValue(shader, windowSizeLoc, &(Vector2) {WINDOW_WIDTH, WINDOW_HEIGHT}, SHADER_UNIFORM_VEC2);
+
+	int ballsLoc = GetShaderLocation(shader, "metaballData");
+
 	while (!WindowShouldClose())
 	{
 		BeginDrawing();
@@ -55,9 +63,6 @@ int main(void)
 
 		for (size_t i = 0; i < BALL_COUNT; i++)
 		{
-			DrawCircle(balls[i].x, balls[i].y, 10, RED);
-			DrawCircleLines(balls[i].x, balls[i].y, balls[i].r, RED);
-
 			Ball *b = &balls[i];
 			b->x += b->velX;
 			b->y += b->velY;
@@ -66,8 +71,17 @@ int main(void)
 				b->velX *= -1;
 			if (b->y > WINDOW_HEIGHT || b->y < 0)
 				b->velY *= -1;
+
+			shaderBalls[i] = (Vector3) {
+				.x = balls[i].x,
+				.y = balls[i].y,
+				.z = balls[i].r
+			};
 		}
 
+		SetShaderValueV(shader, ballsLoc, shaderBalls, SHADER_UNIFORM_VEC3, BALL_COUNT);
+
+#if 0
 		for (size_t y = 0; y < WINDOW_HEIGHT; y++)
 		{
 			for (size_t x = 0; x < WINDOW_WIDTH; x++)
@@ -92,16 +106,16 @@ int main(void)
 				SetPixelColor(pixelAddress, (Color) {grayscale, grayscale, grayscale, 255}, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 			}
 		}
-
-		Texture t = LoadTextureFromImage(i);
-		DrawTexture(t, 0, 0, WHITE);
+#endif
+		BeginShaderMode(shader);
+		DrawTexture(shaderOutputTexture, 0.0f, 0.0f, WHITE);
+		EndShaderMode();
 
 		DrawFPS(0, 0);
 		EndDrawing();
-
-		UnloadTexture(t);
-		((int *)i.data)[0] = 0XFFFF0000;
 	}
+
+	UnloadTexture(shaderOutputTexture);
 
 	CloseWindow();
 	return 0;
