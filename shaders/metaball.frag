@@ -65,7 +65,9 @@ void main()
 	// 	finalColor = vec4(0);
 	// 	return;
 	// }
+
 	brightness = clamp(brightness, 0.0, 1.0);
 	vec3 color = HSLToRGB(vec3(brightness, 1.0, 0.5));
 	finalColor = vec4(color.xyz, 1.0);	
 }
+

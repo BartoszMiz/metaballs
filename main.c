@@ -52,7 +52,7 @@ int main(void)
 	Texture2D shaderOutputTexture = LoadTextureFromImage(i);
 	Shader shader = LoadShader(NULL, "shaders/metaball.frag");
 	int windowSizeLoc = GetShaderLocation(shader, "windowSize");
-	SetShaderValue(shader, windowSizeLoc, &(Vector2) {WINDOW_WIDTH, WINDOW_HEIGHT}, SHADER_UNIFORM_VEC2);
+	SetShaderValue(shader, windowSizeLoc, &(Vector2){WINDOW_WIDTH, WINDOW_HEIGHT}, SHADER_UNIFORM_VEC2);
 
 	int ballsLoc = GetShaderLocation(shader, "metaballData");
 
